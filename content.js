@@ -1,25 +1,40 @@
 function cleanGarbageFeed() {
-    // 1. Find EVERY span on the page
+    // === PHASE 1: NUKE SPONSORED ADS (The "/"ads/about/" check) ===
+    // This is incredibly fast because it targets the specific href directly
+    const adLinks = document.querySelectorAll('a[href*="/ads/about/"]');
+    
+    adLinks.forEach(link => {
+        // Climb to find the parent post container
+        const postContainer = link.closest('[aria-posinset], [role="article"], [data-pagelet^="FeedUnit"]');
+        
+        if (postContainer) {
+            // Skip if we already nuked it
+            if (postContainer.hasAttribute('data-zanno-nuked')) return;
+
+            console.log("💥 Zanno's Cleanser (Link-Check) nuked a Sponsored Ad!");
+            postContainer.style.display = 'none';
+            postContainer.setAttribute('data-zanno-nuked', 'true');
+        }
+    });
+
+    // === PHASE 2: NUKE SUGGESTED CONTENT ("Följ" or "Gå med") ===
     const spans = document.querySelectorAll('span');
 
     spans.forEach(span => {
-        // 2. Check if it's our target button
         const text = span.textContent.trim();
         if (text === "Följ" || text === "Gå med") {
 
-            // 3. CLIMB THE TREE! 
-            // Look upwards for the closest parent div that acts as a feed card
-            const postContainer = span.closest('[aria-posinset], [role="article"],[data-pagelet^="FeedUnit"]');
+            // Climb upwards for the closest parent post container
+            const postContainer = span.closest('[aria-posinset], [role="article"], [data-pagelet^="FeedUnit"]');
 
             if (postContainer) {
                 // Skip if we already nuked it
                 if (postContainer.hasAttribute('data-zanno-nuked')) return;
 
-                // 4. Check for the organic friend share exception
+                // Check for the organic friend share exception
                 if (!postContainer.textContent.includes("delade ett inlägg")) {
-                    console.log("💥 Zanno's Cleanser (Bottom-Up) nuked a post!");
+                    console.log("💥 Zanno's Cleanser (Bottom-Up) nuked a Suggested Post!");
 
-                    // 5. THE EXECUTION
                     postContainer.style.display = 'none';
                     postContainer.setAttribute('data-zanno-nuked', 'true');
                 }
@@ -36,4 +51,4 @@ const observer = new MutationObserver((mutations) => {
 cleanGarbageFeed();
 
 observer.observe(document.body, { childList: true, subtree: true });
-console.log("⚔️ Zanno's Feed Cleanser v1.3 (Bottom-Up Mode) is online...");
+console.log("⚔️ Zanno's Feed Cleanser v1.4 (Multi-Nuker Mode) is online...");
